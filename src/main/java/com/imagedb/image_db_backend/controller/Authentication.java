@@ -2,10 +2,12 @@ package com.imagedb.image_db_backend.controller;
 
 import com.imagedb.image_db_backend.model.*;
 import com.imagedb.image_db_backend.service.UserService;
+import io.github.cdimascio.dotenv.Dotenv;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -18,10 +20,14 @@ import java.util.regex.Pattern;
 public class Authentication {
 
     private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
+    private final Dotenv dotenv;
 
     @Autowired
-    public Authentication(UserService userService) {
+    public Authentication(UserService userService, PasswordEncoder passwordEncoder) {
         this.userService = userService;
+        this.passwordEncoder = passwordEncoder;
+        this.dotenv = Dotenv.configure().ignoreIfMissing().load();
     }
 
     @RequestMapping(value = "/hello",
@@ -52,11 +58,17 @@ public class Authentication {
             return ResponseEntity.status(400).body(new SignInAndSignUpResponse("", "Invalid email or password"));
         }
         email = email.toLowerCase();
-        if (userService.getUserByEmail(email) == null) {
+        UserSchema user = userService.getUserByEmail(email);
+        if (user == null) {
             return ResponseEntity.status(404).body(new SignInAndSignUpResponse("", "User not found"));
         }
-        if (userService.checkPassword(email, password)) {
-            String token = Jwts.builder().setSubject(email).signWith(SignatureAlgorithm.HS512, "secret").compact();
+        if (passwordEncoder.matches(password, user.getPassword())) {
+            String token = Jwts.builder()
+                    .claim("id", user.getId())
+                    .claim("name", user.getName())
+                    .claim("email", user.getEmail())
+                    .signWith(SignatureAlgorithm.HS512, dotenv.get("JWT_SECRET"))
+                    .compact();
             return ResponseEntity.ok(new SignInAndSignUpResponse(token, "Success"));
         } else {
             return ResponseEntity.status(401).body(new SignInAndSignUpResponse("", "Invalid email or password"));
@@ -81,7 +93,12 @@ public class Authentication {
         }
         UserSchema newUser = new UserSchema(name, email, password);
         userService.createUser(newUser);
-        String token = Jwts.builder().setSubject(email).signWith(SignatureAlgorithm.HS512, "secret").compact();
+        String token = Jwts.builder()
+                .claim("id", newUser.getId())
+                .claim("name", newUser.getName())
+                .claim("email", newUser.getEmail())
+                .signWith(SignatureAlgorithm.HS512, dotenv.get("JWT_SECRET"))
+                .compact();
         return ResponseEntity.ok(new SignInAndSignUpResponse(token, "Success"));
     }
 
@@ -105,7 +122,7 @@ public class Authentication {
             UserSchema newUser = new UserSchema(name, email, null);
             userService.createUser(newUser);
         } else {
-            if (existingUser.getPassword() == null ||  !existingUser.getPassword().isEmpty()) {
+            if (existingUser.getPassword() != null || !existingUser.getPassword().isEmpty()) {
                 return ResponseEntity.status(409).body(false);
             }
             if (!existingUser.getName().equals(name)) {
