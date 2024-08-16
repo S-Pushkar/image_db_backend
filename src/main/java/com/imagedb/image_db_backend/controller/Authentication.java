@@ -24,7 +24,9 @@ public class Authentication {
         this.userService = userService;
     }
 
-    @RequestMapping(value = "/hello", method = RequestMethod.GET, produces = "text/plain")
+    @RequestMapping(value = "/hello",
+            method = RequestMethod.GET,
+            produces = "text/plain")
     public String hello() {
         return "Hello, World!";
     }
@@ -47,17 +49,17 @@ public class Authentication {
         String email = signInDetails.getEmail();
         String password = signInDetails.getPassword();
         if (email == null || password == null || email.isEmpty() || password.isEmpty() || !checkEmail(email)) {
-            return ResponseEntity.status(400).build();
+            return ResponseEntity.status(400).body(new SignInAndSignUpResponse("", "Invalid email or password"));
         }
         email = email.toLowerCase();
         if (userService.getUserByEmail(email) == null) {
-            return ResponseEntity.status(404).build();
+            return ResponseEntity.status(404).body(new SignInAndSignUpResponse("", "User not found"));
         }
         if (userService.checkPassword(email, password)) {
             String token = Jwts.builder().setSubject(email).signWith(SignatureAlgorithm.HS512, "secret").compact();
-            return ResponseEntity.ok(new SignInAndSignUpResponse(token));
+            return ResponseEntity.ok(new SignInAndSignUpResponse(token, "Success"));
         } else {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(401).body(new SignInAndSignUpResponse("", "Invalid email or password"));
         }
     }
 
@@ -71,16 +73,16 @@ public class Authentication {
         String name = signUpDetails.getName();
         String password = signUpDetails.getPassword();
         if (email == null || name == null || password == null || email.isEmpty() || name.isEmpty() || password.isEmpty() || !checkEmail(email)) {
-            return ResponseEntity.status(400).build();
+            return ResponseEntity.status(400).body(new SignInAndSignUpResponse("", "Invalid email, name or password"));
         }
         email = email.toLowerCase();
         if (userService.getUserByEmail(email) != null) {
-            return ResponseEntity.status(409).build();
+            return ResponseEntity.status(409).body(new SignInAndSignUpResponse("", "User already exists"));
         }
         UserSchema newUser = new UserSchema(name, email, password);
         userService.createUser(newUser);
         String token = Jwts.builder().setSubject(email).signWith(SignatureAlgorithm.HS512, "secret").compact();
-        return ResponseEntity.ok(new SignInAndSignUpResponse(token));
+        return ResponseEntity.ok(new SignInAndSignUpResponse(token, "Success"));
     }
 
     @RequestMapping(
