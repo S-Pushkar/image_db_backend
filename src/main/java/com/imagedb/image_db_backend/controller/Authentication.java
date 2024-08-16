@@ -8,13 +8,11 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.regex.Pattern;
 
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
 @RequestMapping("/api/auth")
 public class Authentication {
@@ -30,6 +28,7 @@ public class Authentication {
         this.dotenv = Dotenv.configure().ignoreIfMissing().load();
     }
 
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @RequestMapping(value = "/hello",
             method = RequestMethod.GET,
             produces = "text/plain")
@@ -46,6 +45,7 @@ public class Authentication {
         return pat.matcher(email).matches();
     }
 
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @RequestMapping(
             value = "/sign-in",
             method = RequestMethod.POST,
@@ -54,8 +54,11 @@ public class Authentication {
     public ResponseEntity<SignInAndSignUpResponse> login(@RequestBody final SignInDetails signInDetails) {
         String email = signInDetails.getEmail();
         String password = signInDetails.getPassword();
-        if (email == null || password == null || email.isEmpty() || password.isEmpty() || !checkEmail(email)) {
-            return ResponseEntity.status(400).body(new SignInAndSignUpResponse("", "Invalid email or password"));
+        if (email == null || email.isEmpty() || !checkEmail(email)) {
+            return ResponseEntity.status(400).body(new SignInAndSignUpResponse("", "Invalid email"));
+        }
+        if (password == null || password.isEmpty()) {
+            return ResponseEntity.status(400).body(new SignInAndSignUpResponse("", "Invalid password"));
         }
         email = email.toLowerCase();
         UserSchema user = userService.getUserByEmail(email);
@@ -71,10 +74,11 @@ public class Authentication {
                     .compact();
             return ResponseEntity.ok(new SignInAndSignUpResponse(token, "Success"));
         } else {
-            return ResponseEntity.status(401).body(new SignInAndSignUpResponse("", "Invalid email or password"));
+            return ResponseEntity.status(401).body(new SignInAndSignUpResponse("", "Invalid password"));
         }
     }
 
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @RequestMapping(
             value = "/sign-up",
             method = RequestMethod.POST,
@@ -84,8 +88,14 @@ public class Authentication {
         String email = signUpDetails.getEmail();
         String name = signUpDetails.getName();
         String password = signUpDetails.getPassword();
-        if (email == null || name == null || password == null || email.isEmpty() || name.isEmpty() || password.isEmpty() || !checkEmail(email)) {
-            return ResponseEntity.status(400).body(new SignInAndSignUpResponse("", "Invalid email, name or password"));
+        if (email == null || email.isEmpty() || !checkEmail(email)) {
+            return ResponseEntity.status(400).body(new SignInAndSignUpResponse("", "Invalid email"));
+        }
+        if (name == null || name.isEmpty()) {
+            return ResponseEntity.status(400).body(new SignInAndSignUpResponse("", "Invalid name"));
+        }
+        if (password == null || password.isEmpty()) {
+            return ResponseEntity.status(400).body(new SignInAndSignUpResponse("", "Invalid password"));
         }
         email = email.toLowerCase();
         if (userService.getUserByEmail(email) != null) {
@@ -102,6 +112,7 @@ public class Authentication {
         return ResponseEntity.ok(new SignInAndSignUpResponse(token, "Success"));
     }
 
+    @CrossOrigin(origins = "*", allowedHeaders = "*")
     @RequestMapping(
             value = "/nextauth-sign-in",
             method = RequestMethod.POST,
@@ -122,7 +133,10 @@ public class Authentication {
             UserSchema newUser = new UserSchema(name, email, null);
             userService.createUser(newUser);
         } else {
-            if (existingUser.getPassword() != null || !existingUser.getPassword().isEmpty()) {
+            if (existingUser.getPassword() == null) {
+                return ResponseEntity.status(409).body(false);
+            }
+            if (!existingUser.getPassword().isEmpty()) {
                 return ResponseEntity.status(409).body(false);
             }
             if (!existingUser.getName().equals(name)) {
