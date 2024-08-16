@@ -9,8 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.regex.Pattern;
+import org.apache.commons.validator.routines.EmailValidator;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
@@ -36,13 +35,8 @@ public class Authentication {
         return "Hello, World!";
     }
 
-    private boolean checkEmail(String email) {
-        String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\."+
-                "[a-zA-Z0-9_+&*-]+)*@" +
-                "(?:[a-zA-Z0-9-]+\\.)+[a-z" +
-                "A-Z]{2,7}$";
-        Pattern pat = Pattern.compile(emailRegex);
-        return pat.matcher(email).matches();
+    private boolean isEmailPatternNotValid(String email) {
+        return !EmailValidator.getInstance().isValid(email);
     }
 
     @CrossOrigin(origins = "*", allowedHeaders = "*")
@@ -54,7 +48,7 @@ public class Authentication {
     public ResponseEntity<SignInAndSignUpResponse> login(@RequestBody final SignInDetails signInDetails) {
         String email = signInDetails.getEmail();
         String password = signInDetails.getPassword();
-        if (email == null || email.isEmpty() || !checkEmail(email)) {
+        if (email == null || email.isEmpty() || isEmailPatternNotValid(email)) {
             return ResponseEntity.status(400).body(new SignInAndSignUpResponse("", "Invalid email"));
         }
         if (password == null || password.isEmpty()) {
@@ -88,7 +82,7 @@ public class Authentication {
         String email = signUpDetails.getEmail();
         String name = signUpDetails.getName();
         String password = signUpDetails.getPassword();
-        if (email == null || email.isEmpty() || !checkEmail(email)) {
+        if (email == null || email.isEmpty() || isEmailPatternNotValid(email)) {
             return ResponseEntity.status(400).body(new SignInAndSignUpResponse("", "Invalid email"));
         }
         if (name == null || name.isEmpty()) {
@@ -121,7 +115,7 @@ public class Authentication {
     public ResponseEntity<Boolean> nextAuthLogin(@RequestBody final NextAuthSignInDetails nextAuthSignInDetails) {
         String name = nextAuthSignInDetails.getName();
         String email = nextAuthSignInDetails.getEmail();
-        if (email == null || email.isEmpty() || !checkEmail(email)) {
+        if (email == null || email.isEmpty() || isEmailPatternNotValid(email)) {
             return ResponseEntity.status(400).body(false);
         }
         email = email.toLowerCase();
