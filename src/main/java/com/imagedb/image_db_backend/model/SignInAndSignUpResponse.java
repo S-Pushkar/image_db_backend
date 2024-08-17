@@ -4,6 +4,9 @@ public class SignInAndSignUpResponse {
     private String token;
     private String message;
 
+    public SignInAndSignUpResponse() {
+    }
+
     public SignInAndSignUpResponse(String token, String message) {
         this.token = token;
         this.message = message;

@@ -10,17 +10,21 @@ import java.util.Date;
 public class OTPSchema {
     @Id
     private String id;
+
     private String email;
     private String otp;
-    private final Date timestamp;
+    private int count;
+    private Date timestamp;
+
     @Indexed(name = "expireAtIndex", expireAfterSeconds = 0)
-    private final Date expireAt;
+    private Date expireAt;
 
     public OTPSchema(String email, String otp) {
         this.email = email;
         this.otp = otp;
+        this.count = 0;
         this.timestamp = new Date();
-        this.expireAt = new Date(this.timestamp.getTime() + 5 * 60 * 1000);
+        this.expireAt = new Date(this.timestamp.getTime() + 60 * 1000); // Expires after 1 minute
     }
 
     public String getId() {
@@ -47,11 +51,27 @@ public class OTPSchema {
         this.otp = otp;
     }
 
+    public int getCount() {
+        return count;
+    }
+
+    public void setCount(int count) {
+        this.count = count;
+    }
+
     public Date getTimestamp() {
         return timestamp;
     }
 
+    public void setTimestamp(Date timestamp) {
+        this.timestamp = timestamp;
+    }
+
     public Date getExpireAt() {
         return expireAt;
+    }
+
+    public void setExpireAt(Date expireAt) {
+        this.expireAt = expireAt;
     }
 }

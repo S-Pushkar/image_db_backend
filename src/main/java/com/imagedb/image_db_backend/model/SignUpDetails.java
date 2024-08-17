@@ -5,6 +5,9 @@ public class SignUpDetails {
     private String name;
     private String password;
 
+    public SignUpDetails() {
+    }
+
     public SignUpDetails(String email, String name, String password) {
         this.email = email;
         this.name = name;

@@ -29,6 +29,8 @@ dependencies {
 	implementation 'io.github.cdimascio:dotenv-java:3.0.0'
 //	implementation 'commons-validator:commons-validator:1.4.1'
 	implementation group: 'commons-validator', name: 'commons-validator', version: '1.9.0'
+	implementation 'org.springframework.boot:spring-boot-starter-mail:3.3.2'
+	compileOnly 'org.projectlombok:lombok:1.18.34'
 }
 
 tasks.named('test') {

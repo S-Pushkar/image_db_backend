@@ -4,6 +4,9 @@ public class SignInDetails {
     private String email;
     private String password;
 
+    public SignInDetails() {
+    }
+
     public SignInDetails(String email, String password) {
         this.email = email;
         this.password = password;
