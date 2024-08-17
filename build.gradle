@@ -27,7 +27,8 @@ dependencies {
 	implementation 'javax.xml.bind:jaxb-api:2.3.1'
 	implementation 'org.glassfish.jaxb:jaxb-runtime:2.3.1'
 	implementation 'io.github.cdimascio:dotenv-java:3.0.0'
-	implementation 'commons-validator:commons-validator:1.4.1'
+//	implementation 'commons-validator:commons-validator:1.4.1'
+	implementation group: 'commons-validator', name: 'commons-validator', version: '1.9.0'
 }
 
 tasks.named('test') {
