@@ -49,26 +49,28 @@ public class Authentication {
         String email = signInDetails.getEmail();
         String password = signInDetails.getPassword();
         if (email == null || email.isEmpty() || isEmailPatternNotValid(email)) {
-            return ResponseEntity.status(400).body(new SignInAndSignUpResponse("", "Invalid email"));
+            return ResponseEntity.status(400).body(new SignInAndSignUpResponse("", "Invalid email", "", ""));
         }
         if (password == null || password.isEmpty()) {
-            return ResponseEntity.status(400).body(new SignInAndSignUpResponse("", "Invalid password"));
+            return ResponseEntity.status(400).body(new SignInAndSignUpResponse("", "Invalid password", "", ""));
         }
         email = email.toLowerCase();
         UserSchema user = userService.getUserByEmail(email);
         if (user == null) {
-            return ResponseEntity.status(404).body(new SignInAndSignUpResponse("", "User not found"));
+            return ResponseEntity.status(404).body(new SignInAndSignUpResponse("", "User not found", "", ""));
         }
+        String userName = user.getName();
+        String userEmail = user.getEmail();
         if (passwordEncoder.matches(password, user.getPassword())) {
             String token = Jwts.builder()
                     .claim("id", user.getId())
-                    .claim("name", user.getName())
-                    .claim("email", user.getEmail())
+                    .claim("name", userName)
+                    .claim("email", userEmail)
                     .signWith(SignatureAlgorithm.HS512, dotenv.get("JWT_SECRET"))
                     .compact();
-            return ResponseEntity.ok(new SignInAndSignUpResponse(token, "Success"));
+            return ResponseEntity.ok(new SignInAndSignUpResponse(token, "Success", userName, userEmail));
         } else {
-            return ResponseEntity.status(401).body(new SignInAndSignUpResponse("", "Invalid password"));
+            return ResponseEntity.status(401).body(new SignInAndSignUpResponse("", "Invalid password", "", ""));
         }
     }
 
@@ -83,27 +85,27 @@ public class Authentication {
         String name = signUpDetails.getName();
         String password = signUpDetails.getPassword();
         if (email == null || email.isEmpty() || isEmailPatternNotValid(email)) {
-            return ResponseEntity.status(400).body(new SignInAndSignUpResponse("", "Invalid email"));
+            return ResponseEntity.status(400).body(new SignInAndSignUpResponse("", "Invalid email", "", ""));
         }
         if (name == null || name.isEmpty()) {
-            return ResponseEntity.status(400).body(new SignInAndSignUpResponse("", "Invalid name"));
+            return ResponseEntity.status(400).body(new SignInAndSignUpResponse("", "Invalid name", "", ""));
         }
         if (password == null || password.isEmpty()) {
-            return ResponseEntity.status(400).body(new SignInAndSignUpResponse("", "Invalid password"));
+            return ResponseEntity.status(400).body(new SignInAndSignUpResponse("", "Invalid password", "", ""));
         }
         email = email.toLowerCase();
         if (userService.getUserByEmail(email) != null) {
-            return ResponseEntity.status(409).body(new SignInAndSignUpResponse("", "User already exists"));
+            return ResponseEntity.status(409).body(new SignInAndSignUpResponse("", "User already exists", "", ""));
         }
         UserSchema newUser = new UserSchema(name, email, password);
         userService.createUser(newUser);
         String token = Jwts.builder()
                 .claim("id", newUser.getId())
-                .claim("name", newUser.getName())
-                .claim("email", newUser.getEmail())
+                .claim("name", name)
+                .claim("email", email)
                 .signWith(SignatureAlgorithm.HS512, dotenv.get("JWT_SECRET"))
                 .compact();
-        return ResponseEntity.ok(new SignInAndSignUpResponse(token, "Success"));
+        return ResponseEntity.ok(new SignInAndSignUpResponse(token, "Success", name, email));
     }
 
     @CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*")

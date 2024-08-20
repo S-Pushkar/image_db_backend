@@ -35,7 +35,7 @@ public class ForgotPassword {
     @CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*")
     @RequestMapping(
             value = "/enter-email",
-            method = RequestMethod.PUT,
+            method = RequestMethod.POST,
             consumes = "application/json",
             produces = "application/json")
     public ResponseEntity<EnterEmailForForgotPasswordResponse> enterEmailForForgotPasswordRequest(@RequestBody final EnterEmailForForgotPasswordRequest body) {
@@ -47,6 +47,12 @@ public class ForgotPassword {
         UserSchema user = userService.getUserByEmail(email);
         if (user == null) {
             return ResponseEntity.status(404).body(new EnterEmailForForgotPasswordResponse("User not found"));
+        }
+        if (user.getPassword() == null) {
+            return ResponseEntity.status(400).body(new EnterEmailForForgotPasswordResponse("User has no password"));
+        }
+        if (user.getPassword().isEmpty()) {
+            return ResponseEntity.status(400).body(new EnterEmailForForgotPasswordResponse("User has no password"));
         }
         OTPSchema existingOtp = otpService.getOTPByEmail(email);
         if (existingOtp != null) {
@@ -74,7 +80,7 @@ public class ForgotPassword {
     @CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*")
     @RequestMapping(
             value = "/resend-otp",
-            method = RequestMethod.PUT,
+            method = RequestMethod.POST,
             consumes = "application/json",
             produces = "application/json")
     public ResponseEntity<EnterEmailForForgotPasswordResponse> resendOTP(@RequestBody final EnterEmailForForgotPasswordRequest body) {
