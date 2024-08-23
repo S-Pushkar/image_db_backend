@@ -36,4 +36,8 @@ public class OTPService {
         otpRepository.save(otp);
     }
 
+    public void deleteOTP(OTPSchema otp) {
+        otpRepository.delete(otp);
+    }
+
 }

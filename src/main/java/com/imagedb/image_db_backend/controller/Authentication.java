@@ -11,9 +11,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.apache.commons.validator.routines.EmailValidator;
 
-@CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*")
 @RestController
 @RequestMapping("/api/auth")
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class Authentication {
 
     private final UserService userService;
@@ -27,7 +27,6 @@ public class Authentication {
         this.dotenv = Dotenv.configure().ignoreIfMissing().load();
     }
 
-    @CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*")
     @RequestMapping(value = "/hello",
             method = RequestMethod.GET,
             produces = "text/plain")
@@ -39,7 +38,6 @@ public class Authentication {
         return !EmailValidator.getInstance().isValid(email);
     }
 
-    @CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*")
     @RequestMapping(
             value = "/sign-in",
             method = RequestMethod.POST,
@@ -74,7 +72,6 @@ public class Authentication {
         }
     }
 
-    @CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*")
     @RequestMapping(
             value = "/sign-up",
             method = RequestMethod.POST,
@@ -108,7 +105,6 @@ public class Authentication {
         return ResponseEntity.ok(new SignInAndSignUpResponse(token, "Success", name, email));
     }
 
-    @CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*")
     @RequestMapping(
             value = "/nextauth-sign-in",
             method = RequestMethod.POST,

@@ -1,9 +1,9 @@
 package com.imagedb.image_db_backend.model;
 
-public class EnterEmailForForgotPasswordResponse {
+public class ForgotPasswordResponse {
     private String message;
 
-    public EnterEmailForForgotPasswordResponse(String message) {
+    public ForgotPasswordResponse(String message) {
         this.message = message;
     }
 
