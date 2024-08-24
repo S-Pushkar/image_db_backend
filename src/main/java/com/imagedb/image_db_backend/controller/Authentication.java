@@ -1,6 +1,7 @@
 package com.imagedb.image_db_backend.controller;
 
 import com.imagedb.image_db_backend.model.*;
+import com.imagedb.image_db_backend.repository.UserRepository;
 import com.imagedb.image_db_backend.service.UserService;
 import io.github.cdimascio.dotenv.Dotenv;
 import io.jsonwebtoken.Jwts;
@@ -19,12 +20,14 @@ public class Authentication {
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final Dotenv dotenv;
+    private final UserRepository userRepository;
 
     @Autowired
-    public Authentication(UserService userService, PasswordEncoder passwordEncoder) {
+    public Authentication(UserService userService, PasswordEncoder passwordEncoder, UserRepository userRepository) {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
         this.dotenv = Dotenv.configure().ignoreIfMissing().load();
+        this.userRepository = userRepository;
     }
 
     @RequestMapping(value = "/hello",
@@ -133,7 +136,7 @@ public class Authentication {
             }
             if (!existingUser.getName().equals(name)) {
                 existingUser.setName(name);
-                userService.updateUser(existingUser.getId(), existingUser);
+                userRepository.save(existingUser);
             }
         }
         return ResponseEntity.ok(true);

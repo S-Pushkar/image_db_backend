@@ -27,6 +27,10 @@ public class VerifiedUserService {
         }
     }
 
+    public void deleteVerifiedUser(VerifiedUserSchema verifiedUser) {
+        verifiedUserRepository.delete(verifiedUser);
+    }
+
     public void updateVerifiedUser(VerifiedUserSchema verifiedUser) {
         verifiedUserRepository.save(verifiedUser);
     }

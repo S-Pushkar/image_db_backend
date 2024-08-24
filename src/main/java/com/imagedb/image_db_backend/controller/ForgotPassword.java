@@ -1,12 +1,15 @@
 package com.imagedb.image_db_backend.controller;
 
 import com.imagedb.image_db_backend.model.*;
+import com.imagedb.image_db_backend.repository.UserRepository;
 import com.imagedb.image_db_backend.service.EmailService;
 import com.imagedb.image_db_backend.service.OTPService;
 import com.imagedb.image_db_backend.service.UserService;
 import com.imagedb.image_db_backend.service.VerifiedUserService;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.NoSuchAlgorithmException;
@@ -21,12 +24,16 @@ public class ForgotPassword {
     private final UserService userService;
     private final EmailService emailService;
     private final VerifiedUserService verifiedUserService;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public ForgotPassword(OTPService otpService, UserService userService, EmailService emailService, VerifiedUserService verifiedUserService) {
+    public ForgotPassword(OTPService otpService, UserService userService, EmailService emailService, VerifiedUserService verifiedUserService, UserRepository userRepository) {
         this.otpService = otpService;
         this.userService = userService;
         this.emailService = emailService;
         this.verifiedUserService = verifiedUserService;
+        this.userRepository = userRepository;
+        this.passwordEncoder = new BCryptPasswordEncoder();
     }
 
     private boolean isEmailPatternNotValid(String email) {
@@ -132,5 +139,40 @@ public class ForgotPassword {
         }
         verifiedUserService.saveVerifiedUser(email);
         return ResponseEntity.status(200).body(new ForgotPasswordResponse("OTP verified successfully"));
+    }
+
+    @RequestMapping(
+            value = "/reset-password",
+            method = RequestMethod.POST,
+            consumes = "application/json",
+            produces = "application/json")
+    public ResponseEntity<ForgotPasswordResponse> resetPassword(@RequestBody final ResetPasswordRequest body) {
+        String email = body.getEmail();
+        String password = body.getPassword();
+        if (email == null || email.isEmpty() || isEmailPatternNotValid(email)) {
+            return ResponseEntity.status(400).body(new ForgotPasswordResponse("Invalid email"));
+        }
+        if (password == null || password.isEmpty()) {
+            return ResponseEntity.status(400).body(new ForgotPasswordResponse("Invalid password"));
+        }
+        email = email.toLowerCase();
+        UserSchema user = userService.getUserByEmail(email);
+        if (user == null) {
+            return ResponseEntity.status(404).body(new ForgotPasswordResponse("User not found"));
+        }
+        if (user.getPassword() == null) {
+            return ResponseEntity.status(400).body(new ForgotPasswordResponse("User has no password"));
+        }
+        if (user.getPassword().isEmpty()) {
+            return ResponseEntity.status(400).body(new ForgotPasswordResponse("User has no password"));
+        }
+        VerifiedUserSchema existingVerifiedUser = verifiedUserService.getVerifiedUserByEmail(email);
+        if (existingVerifiedUser == null) {
+            return ResponseEntity.status(400).body(new ForgotPasswordResponse("OTP not verified"));
+        }
+        verifiedUserService.deleteVerifiedUser(existingVerifiedUser);
+        user.setPassword(passwordEncoder.encode(password));
+        userRepository.save(user);
+        return ResponseEntity.status(200).body(new ForgotPasswordResponse("Password reset successfully"));
     }
 }
