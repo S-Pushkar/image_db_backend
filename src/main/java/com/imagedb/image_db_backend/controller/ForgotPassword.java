@@ -83,7 +83,7 @@ public class ForgotPassword {
         }
         String otpString = otpGenerated.toString();
         OTPSchema otp = new OTPSchema(email, otpString);
-        emailService.sendEmail(email, "ImageDB OTP", "Your OTP is " + otpString);
+        emailService.sendEmail(email, "TagMyPic OTP", "Your OTP is " + otpString);
         otpService.createOTP(otp);
         return ResponseEntity.status(200).body(new ForgotPasswordResponse("OTP sent successfully"));
     }
@@ -108,7 +108,7 @@ public class ForgotPassword {
             return ResponseEntity.status(400).body(new ForgotPasswordResponse("OTP limit exceeded"));
         }
         existingOtp.setCount(count + 1);
-        emailService.sendEmail(email, "ImageDB OTP", "Your OTP is " + existingOtp.getOtp());
+        emailService.sendEmail(email, "TagMyPic OTP", "Your OTP is " + existingOtp.getOtp());
         otpService.updateOTP(existingOtp);
         return ResponseEntity.status(200).body(new ForgotPasswordResponse("OTP sent successfully"));
     }
