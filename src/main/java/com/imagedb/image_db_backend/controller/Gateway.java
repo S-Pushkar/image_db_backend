@@ -8,6 +8,7 @@ import com.azure.storage.blob.models.BlobErrorCode;
 import com.azure.storage.blob.models.BlobStorageException;
 import com.imagedb.image_db_backend.model.OutputForUploadFile;
 import com.imagedb.image_db_backend.model.UserSchema;
+import com.imagedb.image_db_backend.service.UploadFileProducerService;
 import com.imagedb.image_db_backend.service.UserService;
 import io.github.cdimascio.dotenv.Dotenv;
 import io.jsonwebtoken.Claims;
@@ -31,11 +32,13 @@ public class Gateway {
     private final Dotenv dotenv;
     private final UserService userService;
     private BlobContainerClient containerClient;
+    private final UploadFileProducerService uploadFileProducerService;
 
     @Autowired
-    public Gateway(UserService userService) {
+    public Gateway(UserService userService, UploadFileProducerService uploadFileProducerService) {
         this.userService = userService;
         this.dotenv = Dotenv.configure().ignoreIfMissing().load();
+        this.uploadFileProducerService = uploadFileProducerService;
         String endpoint = dotenv.get("AZURE_STORAGE_ACCOUNT_URL");
         String sasToken = dotenv.get("AZURE_STORAGE_ACCOUNT_SAS");
 
@@ -55,6 +58,9 @@ public class Gateway {
     }
 
     private String getFileExtension(String fileName) {
+        if (fileName == null || fileName.isEmpty()) {
+            return "";
+        }
         return fileName.substring(fileName.lastIndexOf("."));
     }
 
@@ -78,7 +84,7 @@ public class Gateway {
             return ResponseEntity.status(400).body(new OutputForUploadFile("No image provided"));
         }
 
-        Claims claims = null;
+        Claims claims;
 
         try {
             claims = Jwts.parser()
@@ -112,12 +118,15 @@ public class Gateway {
 
         numberOfImages++;
 
+        final String fileName = email
+                + "-"
+                + numberOfImages
+                + getFileExtension(Objects.requireNonNull(image.getOriginalFilename()));
+
+        uploadFileProducerService.sendMessage("upload-file", email, fileName, image.getBytes());
+
         try {
-            BlobClient blobClient = this.containerClient.getBlobClient(
-                    email
-                            + "-"
-                            + numberOfImages
-                            + getFileExtension(Objects.requireNonNull(image.getOriginalFilename())));
+            BlobClient blobClient = this.containerClient.getBlobClient(fileName);
             blobClient.upload(image.getResource().getInputStream(), image.getSize());
         } catch (BlobStorageException ex) {
             return ResponseEntity.status(500).body(new OutputForUploadFile("Error uploading image: " + ex.getMessage()));
