@@ -10,11 +10,13 @@ public class UserSchema {
     private String name;
     private String email;
     private String password;
+    private int numberOfImages;
 
-    public UserSchema(String name, String email, String password) {
+    public UserSchema(String name, String email, String password, int numberOfImages) {
         this.name = name;
         this.email = email;
         this.password = password;
+        this.numberOfImages = numberOfImages;
     }
 
     public String getId() {
@@ -47,5 +49,11 @@ public class UserSchema {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public int getNumberOfImages() { return numberOfImages; }
+
+    public void setNumberOfImages(int numberOfImages) {
+        this.numberOfImages = numberOfImages;
     }
 }

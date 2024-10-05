@@ -31,6 +31,7 @@ dependencies {
 	implementation group: 'commons-validator', name: 'commons-validator', version: '1.9.0'
 	implementation 'org.springframework.boot:spring-boot-starter-mail:3.3.2'
 	compileOnly 'org.projectlombok:lombok:1.18.34'
+	implementation 'com.azure:azure-storage-blob:12.28.0'
 }
 
 tasks.named('test') {

@@ -42,6 +42,15 @@ public class UserService {
         userRepository.save(user);
     }
 
+    public void updateNumberOfImages(String id, int numberOfImages) {
+        Optional<UserSchema> userOptional = userRepository.findById(id);
+        if (userOptional.isPresent()) {
+            UserSchema user = userOptional.get();
+            user.setNumberOfImages(numberOfImages);
+            userRepository.save(user);
+        }
+    }
+
     public void updateUser(String Id, UserSchema user) {
         Optional<UserSchema> userOptional = userRepository.findById(Id);
         if (userOptional.isPresent()) {
@@ -49,6 +58,7 @@ public class UserService {
             updatedUser.setName(user.getName());
             updatedUser.setEmail(user.getEmail());
             updatedUser.setPassword(user.getPassword());
+            updatedUser.setNumberOfImages(user.getNumberOfImages());
             userRepository.save(updatedUser);
         }
     }

@@ -97,7 +97,7 @@ public class Authentication {
         if (userService.getUserByEmail(email) != null) {
             return ResponseEntity.status(409).body(new SignInAndSignUpResponse("", "User already exists", "", ""));
         }
-        UserSchema newUser = new UserSchema(name, email, password);
+        UserSchema newUser = new UserSchema(name, email, password, 0);
         userService.createUser(newUser);
         String token = Jwts.builder()
                 .claim("id", newUser.getId())
@@ -125,7 +125,7 @@ public class Authentication {
         }
         UserSchema existingUser = userService.getUserByEmail(email);
         if (existingUser == null) {
-            UserSchema newUser = new UserSchema(name, email, null);
+            UserSchema newUser = new UserSchema(name, email, null, 0);
             userService.createUser(newUser);
         } else {
             if (existingUser.getPassword() == null) {
