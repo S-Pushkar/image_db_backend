@@ -6,7 +6,7 @@ docker run -d --name kafka -p 9092:9092 apache/kafka:3.8.0
 docker run -d --name front -p 3000:3000 image-db-frontend
 bash ./gradlew bootRun --stacktrace
 #docker stop mongo kafka front
-#docker rm mongo kafka frontnt
+#docker rm mongo kafka front
 docker stop kafka front
 docker rm kafka front
 yes | docker system prune
