@@ -6,8 +6,7 @@ import com.azure.storage.blob.BlobServiceClient;
 import com.azure.storage.blob.BlobServiceClientBuilder;
 import com.azure.storage.blob.models.BlobErrorCode;
 import com.azure.storage.blob.models.BlobStorageException;
-import com.imagedb.image_db_backend.model.OutputForUploadFile;
-import com.imagedb.image_db_backend.model.UserSchema;
+import com.imagedb.image_db_backend.model.*;
 import com.imagedb.image_db_backend.service.UploadFileProducerService;
 import com.imagedb.image_db_backend.service.UserService;
 import io.github.cdimascio.dotenv.Dotenv;
@@ -15,12 +14,16 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Base64;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -135,5 +138,86 @@ public class Gateway {
         userService.updateNumberOfImages(id, numberOfImages);
 
         return ResponseEntity.status(200).body(new OutputForUploadFile("Image uploaded successfully"));
+    }
+
+    @RequestMapping(
+            value = "/query-image",
+            method = RequestMethod.POST,
+            consumes = "application/json",
+            produces = "application/json")
+    public ResponseEntity<OutputForQueryImage> queryImage(final @RequestBody RequestForQueryImage request) {
+        String token = request.getToken();
+        String query = request.getQuery();
+
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.status(401).body(new OutputForQueryImage("No token provided"));
+        }
+        if (query == null || query.isEmpty()) {
+            return ResponseEntity.status(400).body(new OutputForQueryImage("No query provided"));
+        }
+
+        Claims claims;
+
+        try {
+            claims = Jwts.parser()
+                    .setSigningKey(dotenv.get("JWT_SECRET"))
+                    .parseClaimsJws(token)
+                    .getBody();
+        } catch (JwtException ex) {
+            return ResponseEntity.status(401).body(new OutputForQueryImage("Invalid token"));
+        }
+
+        final String id = claims.get("id").toString();
+        final String name = claims.get("name").toString();
+        final String email = claims.get("email").toString();
+
+        Optional<UserSchema> user = userService.getUserById(id);
+
+        if (user.isEmpty()) {
+            return ResponseEntity.status(401).body(new OutputForQueryImage("User not found"));
+        }
+
+        UserSchema userSchema = user.get();
+
+        if (!userSchema.getName().equals(name) || !userSchema.getEmail().equals(email)) {
+            return ResponseEntity.status(401).body(new OutputForQueryImage("Invalid token"));
+        }
+
+        String queryFileNameAPIUrl = "http://localhost:8001/querytext/";
+        RequestToQueryFileNameAPI requestToQueryFileNameAPI = new RequestToQueryFileNameAPI(email, query);
+        RestTemplate restTemplate = new RestTemplate();
+
+        ResponseEntity<ResponseFromQueryFileNameAPI> response = restTemplate.postForEntity(queryFileNameAPIUrl, requestToQueryFileNameAPI, ResponseFromQueryFileNameAPI.class);
+
+        if (response.getStatusCode() != HttpStatus.OK) {
+            return ResponseEntity.status(500).body(new OutputForQueryImage("Error querying image"));
+        }
+
+        ResponseFromQueryFileNameAPI responseFromQueryFileNameAPI = response.getBody();
+
+        if (responseFromQueryFileNameAPI == null) {
+            return ResponseEntity.status(500).body(new OutputForQueryImage("No images found"));
+        }
+
+        ResultFromZilliz result = responseFromQueryFileNameAPI.getResults().getFirst();
+
+        if (result == null) {
+            return ResponseEntity.status(500).body(new OutputForQueryImage("No images found"));
+        }
+
+        String fileName = result.getImage_path();
+
+        BlobClient blobClient = this.containerClient.getBlobClient(fileName);
+
+        String base64Image;
+
+        try (InputStream inputStream = blobClient.openInputStream()) {
+            byte[] bytes = inputStream.readAllBytes();
+            base64Image = Base64.getEncoder().encodeToString(bytes);
+        } catch (IOException ex) {
+            return ResponseEntity.status(500).body(new OutputForQueryImage("Error reading image"));
+        }
+
+        return ResponseEntity.status(200).body(new OutputForQueryImage("Image found", base64Image));
     }
 }
