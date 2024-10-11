@@ -1,7 +1,5 @@
 package com.imagedb.image_db_backend.model;
 
-import java.io.InputStream;
-
 public class OutputForQueryImage {
 
     private String message;
