@@ -183,7 +183,7 @@ public class Gateway {
             return ResponseEntity.status(401).body(new OutputForQueryImage("Invalid token"));
         }
 
-        String queryFileNameAPIUrl = "http://localhost:8001/querytext/";
+        String queryFileNameAPIUrl = dotenv.get("QUERY_FILE_NAME_API_URL");
         RequestToQueryFileNameAPI requestToQueryFileNameAPI = new RequestToQueryFileNameAPI(email, query);
         RestTemplate restTemplate = new RestTemplate();
 
