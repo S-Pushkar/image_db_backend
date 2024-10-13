@@ -183,7 +183,12 @@ public class Gateway {
             return ResponseEntity.status(401).body(new OutputForQueryImage("Invalid token"));
         }
 
-        String queryFileNameAPIUrl = dotenv.get("QUERY_FILE_NAME_API_URL");
+        String queryFileNameAPIUrl;
+        if (System.getenv("IS_DOCKER") != null) {
+            queryFileNameAPIUrl = dotenv.get("QUERY_FILE_NAME_API_URL_DOCKER");
+        } else {
+            queryFileNameAPIUrl = dotenv.get("QUERY_FILE_NAME_API_URL");
+        }
         RequestToQueryFileNameAPI requestToQueryFileNameAPI = new RequestToQueryFileNameAPI(email, query);
         RestTemplate restTemplate = new RestTemplate();
 
