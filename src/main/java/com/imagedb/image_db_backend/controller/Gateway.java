@@ -6,6 +6,7 @@ import com.azure.storage.blob.BlobServiceClient;
 import com.azure.storage.blob.BlobServiceClientBuilder;
 import com.azure.storage.blob.models.BlobErrorCode;
 import com.azure.storage.blob.models.BlobStorageException;
+import com.imagedb.image_db_backend.config.BlobContainerClientFactory;
 import com.imagedb.image_db_backend.model.*;
 import com.imagedb.image_db_backend.service.UploadFileProducerService;
 import com.imagedb.image_db_backend.service.UserService;
@@ -34,30 +35,15 @@ public class Gateway {
 
     private final Dotenv dotenv;
     private final UserService userService;
-    private BlobContainerClient containerClient;
+    private final BlobContainerClient containerClient;
     private final UploadFileProducerService uploadFileProducerService;
 
     @Autowired
-    public Gateway(UserService userService, UploadFileProducerService uploadFileProducerService) {
+    public Gateway(UserService userService, BlobContainerClient containerClient, UploadFileProducerService uploadFileProducerService) {
         this.userService = userService;
         this.dotenv = Dotenv.configure().ignoreIfMissing().load();
+        this.containerClient = containerClient;
         this.uploadFileProducerService = uploadFileProducerService;
-        String endpoint = dotenv.get("AZURE_STORAGE_ACCOUNT_URL");
-        String sasToken = dotenv.get("AZURE_STORAGE_ACCOUNT_SAS");
-
-        BlobServiceClient blobServiceClient = new BlobServiceClientBuilder()
-                .endpoint(endpoint)
-                .sasToken(sasToken)
-                .buildClient();
-
-        try {
-            this.containerClient = blobServiceClient.createBlobContainer("images");
-        } catch (BlobStorageException ex) {
-            if (!ex.getErrorCode().equals(BlobErrorCode.CONTAINER_ALREADY_EXISTS)) {
-                throw ex;
-            }
-            this.containerClient = blobServiceClient.getBlobContainerClient("images");
-        }
     }
 
     private String getFileExtension(String fileName) {

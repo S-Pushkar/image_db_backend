@@ -13,6 +13,16 @@ java {
 	}
 }
 
+jar {
+	manifest {
+		attributes "Main-Class": "org.mytest.FizzBuzzProcessor"
+	}
+
+	from {
+		configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+	}
+}
+
 repositories {
 	mavenCentral()
 }
