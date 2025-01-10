@@ -2,11 +2,7 @@ package com.imagedb.image_db_backend.controller;
 
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
-import com.azure.storage.blob.BlobServiceClient;
-import com.azure.storage.blob.BlobServiceClientBuilder;
-import com.azure.storage.blob.models.BlobErrorCode;
 import com.azure.storage.blob.models.BlobStorageException;
-import com.imagedb.image_db_backend.config.BlobContainerClientFactory;
 import com.imagedb.image_db_backend.model.*;
 import com.imagedb.image_db_backend.service.UploadFileProducerService;
 import com.imagedb.image_db_backend.service.UserService;
