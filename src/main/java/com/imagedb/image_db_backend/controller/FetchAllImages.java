@@ -79,17 +79,15 @@ public class FetchAllImages {
         List<String> imageBase64s = new ArrayList<>();
 
         try {
-            this.containerClient.listBlobs().forEach(blobItem -> {
+            this.containerClient.listBlobsByHierarchy(fileNamePrefix).forEach(blobItem -> {
                 String blobName = blobItem.getName();
-                if (blobName.startsWith(fileNamePrefix)) {
-                    BlobClient blobClient = this.containerClient.getBlobClient(blobName);
-                    try (InputStream inputStream = blobClient.openInputStream()) {
-                        byte[] bytes = inputStream.readAllBytes();
-                        String base64 = Base64.getEncoder().encodeToString(bytes);
-                        imageBase64s.add(base64);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+                BlobClient blobClient = this.containerClient.getBlobClient(blobName);
+                try (InputStream inputStream = blobClient.openInputStream()) {
+                    byte[] bytes = inputStream.readAllBytes();
+                    String base64 = Base64.getEncoder().encodeToString(bytes);
+                    imageBase64s.add(base64);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
             });
         } catch (Exception e) {
